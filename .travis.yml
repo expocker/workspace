@@ -1,12 +1,16 @@
-language: bash
-sudo: required
+os: linux
+dist: bionic
+
 services:
   - docker
 
 env:
-  matrix:
-    - PHP_VERSION=73
-    - PHP_VERSION=74
+  - PHP_VERSION=73
+  - PHP_VERSION=74
+jobs:
+  exclude:
+    - if: branch != master
+      env: PHP_VERSION=73
 
 # Installing a newer Docker version
 before_install:

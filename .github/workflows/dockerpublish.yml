@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker image CD
 
 on:
   push:
@@ -7,26 +7,19 @@ on:
   - cron: 0 0 * * 6
 
 jobs:
+  env: PHP_VERSION=73
+  env: PHP_VERSION=74
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php_version: [73, 74]
     steps:
-    - uses: actions/checkout@v2
-    - name: Build the Docker image
-      env:
-        PHP_VERSION: ${{ matrix.php_version }}
-      run: |
-        export TAG_VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
-        docker build . --file Dockerfile-${{ matrix.php_version }} --tag expocker/workspace:${TAG_VERSION}
-        docker image ls
-    - name: Push image to Docker hub
-      if: success()
-      env:
-        PHP_VERSION: ${{ matrix.php_version }}
-      run: |
-        export TAG_VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
-        echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
-        docker push expocker/workspace:${TAG_VERSION}
-        docker logout
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          repository: expocker/workspace
+          tags: ${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
+          dockerfile: Dockerfile-${PHP_VERSION}

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php_version: [56, 70, 71, 72, 73, 74]
+        php_version: [73, 74]
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
@@ -19,7 +19,7 @@ jobs:
         PHP_VERSION: ${{ matrix.php_version }}
       run: |
         export TAG_VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
-        docker build . --file Dockerfile-${{ matrix.php_version }} --tag laradock/workspace:latest-${TAG_VERSION}
+        docker build . --file Dockerfile-${{ matrix.php_version }} --tag expocker/workspace:${TAG_VERSION}
         docker image ls
     - name: Push image to Docker hub
       if: success()
@@ -28,5 +28,5 @@ jobs:
       run: |
         export TAG_VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
         echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
-        docker push laradock/workspace:latest-${TAG_VERSION}
+        docker push expocker/workspace:${TAG_VERSION}
         docker logout

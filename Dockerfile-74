@@ -1,25 +1,18 @@
 #
 #--------------------------------------------------------------------------
-# Image Setup
+# Image Setup.
+# 
+# See https://github.com/phusion/baseimage-docker/blob/master/Changelog.md 
+# for a list of version numbers.
 #--------------------------------------------------------------------------
 #
 
-FROM phusion/baseimage:0.11
+FROM phusion/baseimage:bionic-1.0.0
 
-LABEL maintainer="Mahmoud Zalt <mahmoud@zalt.me>"
+LABEL maintainer="Artem Fufaldin <artem.fufaldin@gmail.com>"
 
-RUN DEBIAN_FRONTEND=noninteractive
-RUN locale-gen en_US.UTF-8
-
-ENV LANGUAGE=en_US.UTF-8
-ENV LC_ALL=en_US.UTF-8
-ENV LC_CTYPE=en_US.UTF-8
-ENV LANG=en_US.UTF-8
-ENV TERM xterm
-
-# Add the "PHP 7" ppa
-RUN apt-get install -y software-properties-common && \
-    add-apt-repository -y ppa:ondrej/php
+# Set Environment Variables
+ENV DEBIAN_FRONTEND noninteractive
 
 #
 #--------------------------------------------------------------------------
@@ -27,53 +20,26 @@ RUN apt-get install -y software-properties-common && \
 #--------------------------------------------------------------------------
 #
 
-RUN echo 'DPkg::options { "--force-confdef"; };' >> /etc/apt/apt.conf
-
 # Install "PHP Extentions", "libraries", "Software's"
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y --allow-downgrades --allow-remove-essential \
-        --allow-change-held-packages \
-        php7.4-cli \
+RUN set -xe; \
+    echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu $(lsb_release -cs) main" | tee -a /etc/apt/sources.list && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E5267A6C && \
+    apt-get update && \
+    apt-get -o DPkg::options::="--force-confold" -y upgrade && \
+    apt-get -o DPkg::options::="--force-confold" -y install \
         php7.4-common \
-        php7.4-curl \
-        php7.4-intl \
+        php7.4-bcmath \
+        php7.4-cli \
         php7.4-json \
         php7.4-xml \
-        php7.4-mbstring \
-        php7.4-mysql \
-        php7.4-pgsql \
-        php7.4-sqlite \
-        php7.4-sqlite3 \
-        php7.4-zip \
-        php7.4-bcmath \
-        php7.4-memcached \
-        php7.4-gd \
-        php7.4-dev \
-        pkg-config \
-        libcurl4-openssl-dev \
-        libedit-dev \
-        libssl-dev \
-        libxml2-dev \
-        xz-utils \
-        libsqlite3-dev \
-        rsync \
-        sqlite3 \
-        git \
-        curl \
-        vim \
-        nano \
-        postgresql-client \
-    && apt-get clean
+        php7.4-mbstring
 
 #####################################
 # Composer:
 #####################################
 
-# Install composer and add its bin to the PATH.
-RUN curl -s http://getcomposer.org/installer | php && \
-    echo "export PATH=${PATH}:/var/www/vendor/bin" >> ~/.bashrc && \
-    mv composer.phar /usr/local/bin/composer
+COPY ./install_composer.sh /root/install_composer.sh
+RUN . /root/install_composer.sh
 
-# Source the bash
-RUN . ~/.bashrc
+# Clean up
+RUN rm /root/install_composer.sh && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
